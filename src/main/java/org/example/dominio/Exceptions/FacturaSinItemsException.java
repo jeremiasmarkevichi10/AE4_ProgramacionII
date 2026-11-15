@@ -1,4 +1,4 @@
-package org.example.Exceptions;
+package org.example.dominio.Exceptions;
 
 public class FacturaSinItemsException extends Exception{
     public FacturaSinItemsException(String mensaje) {

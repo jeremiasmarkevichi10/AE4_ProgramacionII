@@ -1,7 +1,7 @@
-package org.example.ObjetosClave;
+package org.example.dominio.ObjetosClave;
 
-import org.example.Enums.Estado;
-import org.example.Enums.FormaPago;
+import org.example.dominio.Enums.Estado;
+import org.example.dominio.Enums.FormaPago;
 
 public class Pago {
     private double monto;

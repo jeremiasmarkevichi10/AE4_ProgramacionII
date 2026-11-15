@@ -1,8 +1,8 @@
-package org.example.ObjetosClave;
+package org.example.dominio.ObjetosClave;
 
-import org.example.Interfaces.Identificable;
-import org.example.Interfaces.Vencible;
-import org.example.Personas.Proveedor;
+import org.example.dominio.Interfaces.Identificable;
+import org.example.dominio.Interfaces.Vencible;
+import org.example.dominio.Personas.Proveedor;
 import java.time.format.DateTimeParseException;
 
 public class Producto extends ItemComercial implements Identificable, Vencible {

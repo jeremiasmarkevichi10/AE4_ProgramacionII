@@ -1,18 +1,18 @@
-package org.example;
-import org.example.Enums.Categoria;
-import org.example.Enums.Estado;
-import org.example.Enums.FormaPago;
-import org.example.Enums.Puesto;
-import org.example.Exceptions.CreditoInsuficienteException;
-import org.example.Exceptions.FacturaSinItemsException;
-import org.example.Exceptions.PagoExcedeDeudaException;
-import org.example.Interfaces.ComparadorPorTotal;
-import org.example.Interfaces.Identificable;
-import org.example.ObjetosClave.*;
-import org.example.Persistencia.FacturaRepository;
-import org.example.Personas.Cliente;
-import org.example.Personas.Empleado;
-import org.example.Personas.Proveedor;
+package org.example.servicio;
+import org.example.dominio.Enums.Categoria;
+import org.example.dominio.Enums.Estado;
+import org.example.dominio.Enums.FormaPago;
+import org.example.dominio.Enums.Puesto;
+import org.example.dominio.Exceptions.CreditoInsuficienteException;
+import org.example.dominio.Exceptions.FacturaSinItemsException;
+import org.example.dominio.Exceptions.PagoExcedeDeudaException;
+import org.example.dominio.ComparadorPorTotal;
+import org.example.dominio.Interfaces.Identificable;
+import org.example.dominio.ObjetosClave.*;
+import org.example.persistencia.FacturaRepository;
+import org.example.dominio.Personas.Cliente;
+import org.example.dominio.Personas.Empleado;
+import org.example.dominio.Personas.Proveedor;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -485,4 +485,3 @@ public class GestorFunciones {
         }
     }
     }
-

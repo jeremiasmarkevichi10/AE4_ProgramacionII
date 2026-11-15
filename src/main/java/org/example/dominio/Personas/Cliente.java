@@ -1,7 +1,7 @@
-package org.example.Personas;
-import org.example.Enums.Categoria;
-import org.example.ObjetosClave.Factura;
-import org.example.ObjetosClave.ItemComercial;
+package org.example.dominio.Personas;
+import org.example.dominio.Enums.Categoria;
+import org.example.dominio.ObjetosClave.Factura;
+import org.example.dominio.ObjetosClave.ItemComercial;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.List;

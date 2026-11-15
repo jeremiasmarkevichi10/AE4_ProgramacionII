@@ -1,7 +1,7 @@
-    package org.example.ObjetosClave;
-    import org.example.Enums.FormaPago;
-    import org.example.Personas.Cliente;
-    import org.example.Personas.Empleado;
+    package org.example.dominio.ObjetosClave;
+    import org.example.dominio.Enums.FormaPago;
+    import org.example.dominio.Personas.Cliente;
+    import org.example.dominio.Personas.Empleado;
     import java.util.List;
     import com.fasterxml.jackson.annotation.JsonIgnore;
     import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

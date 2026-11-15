@@ -1,4 +1,4 @@
-package org.example.Personas;
+package org.example.dominio.Personas;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

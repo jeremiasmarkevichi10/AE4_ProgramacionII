@@ -1,5 +1,5 @@
-package org.example.ObjetosClave;
-import org.example.Personas.Empleado;
+package org.example.dominio.ObjetosClave;
+import org.example.dominio.Personas.Empleado;
 
 import java.util.List;
 import java.util.ArrayList;

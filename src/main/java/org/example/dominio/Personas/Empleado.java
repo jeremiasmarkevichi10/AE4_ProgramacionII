@@ -1,7 +1,7 @@
-package org.example.Personas;
+package org.example.dominio.Personas;
 
-import org.example.ObjetosClave.Departamento;
-import org.example.Enums.Puesto;
+import org.example.dominio.ObjetosClave.Departamento;
+import org.example.dominio.Enums.Puesto;
 
 public class Empleado extends Persona {
     private Puesto puesto;

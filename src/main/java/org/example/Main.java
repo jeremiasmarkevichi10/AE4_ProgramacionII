@@ -1,9 +1,10 @@
 package org.example;
 import java.util.Scanner;
 
-import org.example.Exceptions.CreditoInsuficienteException;
-import org.example.Exceptions.FacturaSinItemsException;
-import org.example.Exceptions.PagoExcedeDeudaException;
+import org.example.dominio.Exceptions.CreditoInsuficienteException;
+import org.example.dominio.Exceptions.FacturaSinItemsException;
+import org.example.dominio.Exceptions.PagoExcedeDeudaException;
+import org.example.servicio.GestorFunciones;
 
 public class Main {
     public static void main(String[] args) {

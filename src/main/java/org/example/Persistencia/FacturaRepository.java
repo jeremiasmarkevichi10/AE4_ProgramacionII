@@ -1,8 +1,8 @@
-package org.example.Persistencia;
+package org.example.persistencia;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.example.ObjetosClave.Factura;
+import org.example.dominio.ObjetosClave.Factura;
 
 import java.io.File;
 import java.io.IOException;

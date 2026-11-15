@@ -1,6 +1,6 @@
-package org.example.Interfaces;
+package org.example.dominio;
 
-import org.example.ObjetosClave.*;
+import org.example.dominio.ObjetosClave.*;
 
 import java.util.Comparator;
 

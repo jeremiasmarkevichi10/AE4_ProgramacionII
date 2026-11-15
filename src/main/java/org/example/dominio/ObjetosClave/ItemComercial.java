@@ -1,9 +1,9 @@
 
-package org.example.ObjetosClave;
+package org.example.dominio.ObjetosClave;
 import java.util.Random;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import org.example.Personas.Proveedor;
+import org.example.dominio.Personas.Proveedor;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
