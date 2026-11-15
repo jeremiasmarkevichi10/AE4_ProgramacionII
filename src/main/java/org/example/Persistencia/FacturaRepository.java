@@ -2,6 +2,7 @@ package org.example.persistencia;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.example.dominio.RepositorioFacturas;
 import org.example.dominio.ObjetosClave.Factura;
 
 import java.io.File;
@@ -9,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FacturaRepository {
+public class FacturaRepository implements RepositorioFacturas {
     private final ObjectMapper mapper = new ObjectMapper();
     private final File archivo = new File("datos/facturas.json");
 
