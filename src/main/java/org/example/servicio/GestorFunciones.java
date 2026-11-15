@@ -435,8 +435,8 @@ public class GestorFunciones {
         if (montoPagado > total) {
             throw new PagoExcedeDeudaException("El monto abonado no puede superar el total de la factura");
         }
-        if (montoPagado < total && total - montoPagado > cliente.getLimiteCredito()) {
-            throw new CreditoInsuficienteException(cliente.getNombre() + " supera su limite de credito permitido");
+        if (montoPagado < total) {
+            cliente.validarCompra(total - montoPagado);
         }
 
         Estado estado;

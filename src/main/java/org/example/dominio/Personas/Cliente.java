@@ -1,5 +1,6 @@
 package org.example.dominio.Personas;
 import org.example.dominio.Enums.Categoria;
+import org.example.dominio.Exceptions.CreditoInsuficienteException;
 import org.example.dominio.ObjetosClave.Factura;
 import org.example.dominio.ObjetosClave.ItemComercial;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -23,6 +24,12 @@ public class Cliente extends Persona {
     }
     public int getLimiteCredito() {
         return limiteCredito;
+    }
+
+    public void validarCompra(double deuda) throws CreditoInsuficienteException {
+        if (deuda > limiteCredito) {
+            throw new CreditoInsuficienteException(getNombre() + " supera su limite de credito permitido");
+        }
     }
 
     public void setLimiteCredito(int limiteCredito) {
@@ -49,6 +56,5 @@ public class Cliente extends Persona {
     }
     public Cliente() {}
 }
-
 
 
