@@ -7,6 +7,8 @@ import org.example.dominio.Exceptions.CreditoInsuficienteException;
 import org.example.dominio.Exceptions.FacturaSinItemsException;
 import org.example.dominio.Exceptions.PagoExcedeDeudaException;
 import org.example.dominio.ComparadorPorTotal;
+import org.example.dominio.Fabricas.FabricaProducto;
+import org.example.dominio.Fabricas.FabricaServicio;
 import org.example.dominio.Interfaces.Identificable;
 import org.example.dominio.ObjetosClave.*;
 import org.example.dominio.RepositorioFacturas;
@@ -33,19 +35,31 @@ public class GestorFunciones {
     private List<Factura> listaFacturas;
     private final RepositorioFacturas facturaRepository;
     private final Map<Categoria, PoliticaCredito> politicasCredito;
+    private final FabricaProducto fabricaProducto;
+    private final FabricaServicio fabricaServicio;
 
     public GestorFunciones(RepositorioFacturas facturaRepository) {
-        this(facturaRepository, new Scanner(System.in), PoliticasCredito.estandar());
+        this(facturaRepository, new Scanner(System.in));
     }
 
     public GestorFunciones(RepositorioFacturas facturaRepository, Scanner entrada) {
-        this(facturaRepository, entrada, PoliticasCredito.estandar());
+        this(facturaRepository, entrada, PoliticasCredito.estandar(),
+                new FabricaProducto(), new FabricaServicio());
     }
 
     public GestorFunciones(RepositorioFacturas facturaRepository, Scanner entrada,
                            Collection<PoliticaCredito> politicasCredito) {
+        this(facturaRepository, entrada, politicasCredito,
+                new FabricaProducto(), new FabricaServicio());
+    }
+
+    public GestorFunciones(RepositorioFacturas facturaRepository, Scanner entrada,
+                           Collection<PoliticaCredito> politicasCredito,
+                           FabricaProducto fabricaProducto, FabricaServicio fabricaServicio) {
         this.facturaRepository = facturaRepository;
         this.entrada = entrada;
+        this.fabricaProducto = fabricaProducto;
+        this.fabricaServicio = fabricaServicio;
         this.politicasCredito = new EnumMap<>(Categoria.class);
         for (PoliticaCredito politica : politicasCredito) {
             PoliticaCredito anterior = this.politicasCredito.putIfAbsent(
@@ -151,13 +165,16 @@ public class GestorFunciones {
         agregarDepartamento(new Departamento("Sistemas", 500000, null));
         agregarDepartamento(new Departamento("Ventas", 300000, null));
 
-        Producto mouse = crearProductoAleatorio("Mouse", proveedor);
-        Producto teclado = crearProductoAleatorio("Teclado", proveedor);
-        Producto pilas = crearProductoAleatorio("Pilas alcalinas", proveedor);
+        Producto mouse = fabricaProducto.crear("Mouse", proveedor);
+        Producto teclado = fabricaProducto.crear("Teclado", proveedor);
+        Producto pilas = fabricaProducto.crear("Pilas alcalinas", proveedor);
+        listaProductos.add(mouse);
+        listaProductos.add(teclado);
+        listaProductos.add(pilas);
         pilas.setFechaVencimiento("2025-01-01");
         teclado.setFechaVencimiento(LocalDate.now().plusDays(30).toString());
-        crearServicioAleatorio("Limpieza de hardware", proveedor);
-        crearServicioAleatorio("Formateo de equipo", proveedor);
+        listaServicios.add(fabricaServicio.crear("Limpieza de hardware", proveedor));
+        listaServicios.add(fabricaServicio.crear("Formateo de equipo", proveedor));
     }
 
     private Departamento buscarDepartamentoPorNombre(String nombreBuscado) {
@@ -322,7 +339,7 @@ public class GestorFunciones {
             return politica.calcularLimiteCredito();
         }
 
-        public String generarCodigoAleatorio () {
+        private String generarCodigoAleatorio () {
             String letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             StringBuilder codigo = new StringBuilder();
             for (int i = 0; i < 3; i++) {
@@ -330,23 +347,6 @@ public class GestorFunciones {
                 codigo.append(letras.charAt(indice));
             }
             return codigo.toString();
-        }
-
-        public Producto crearProductoAleatorio (String nombre, Proveedor proveedor){
-            String codigo = generarCodigoAleatorio();
-            int precio = 6000 + random.nextInt(70001);
-            int stock = 2 + random.nextInt(11);
-            Producto Nuevoproducto = new Producto(codigo, nombre, precio, stock, proveedor);
-            listaProductos.add(Nuevoproducto);
-            return Nuevoproducto;
-        }
-
-        public Servicio crearServicioAleatorio (String nombre, Proveedor proveedor ){
-            String codigo = generarCodigoAleatorio();
-            int precio = 6000 + random.nextInt(70001);
-            Servicio nuevoServicio = new Servicio(codigo, nombre, precio, proveedor);
-            listaServicios.add(nuevoServicio);
-            return nuevoServicio;
         }
     public Factura registrarPago(Cliente cliente, List<ItemComercial> carrito,
                                  FormaPago formaPago, double montoPagado)
