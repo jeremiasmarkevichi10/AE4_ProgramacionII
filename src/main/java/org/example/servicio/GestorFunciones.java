@@ -9,7 +9,7 @@ import org.example.dominio.Exceptions.PagoExcedeDeudaException;
 import org.example.dominio.ComparadorPorTotal;
 import org.example.dominio.Interfaces.Identificable;
 import org.example.dominio.ObjetosClave.*;
-import org.example.persistencia.FacturaRepository;
+import org.example.dominio.RepositorioFacturas;
 import org.example.dominio.Personas.Cliente;
 import org.example.dominio.Personas.Empleado;
 import org.example.dominio.Personas.Proveedor;
@@ -28,13 +28,14 @@ public class GestorFunciones {
     private List<Producto> listaProductos;
     private List<Servicio> listaServicios;
     private List<Factura> listaFacturas;
-    private FacturaRepository facturaRepository = new FacturaRepository();
+    private final RepositorioFacturas facturaRepository;
 
-    public GestorFunciones() {
-        this(new Scanner(System.in));
+    public GestorFunciones(RepositorioFacturas facturaRepository) {
+        this(facturaRepository, new Scanner(System.in));
     }
 
-    public GestorFunciones(Scanner entrada) {
+    public GestorFunciones(RepositorioFacturas facturaRepository, Scanner entrada) {
+        this.facturaRepository = facturaRepository;
         this.entrada = entrada;
         this.listaDepartamentos = new ArrayList<>();
         this.listaEmpleados = new ArrayList<>();

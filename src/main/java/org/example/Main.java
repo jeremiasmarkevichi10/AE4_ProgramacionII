@@ -5,11 +5,12 @@ import org.example.dominio.Exceptions.CreditoInsuficienteException;
 import org.example.dominio.Exceptions.FacturaSinItemsException;
 import org.example.dominio.Exceptions.PagoExcedeDeudaException;
 import org.example.servicio.GestorFunciones;
+import org.example.persistencia.FacturaRepository;
 
 public class Main {
     public static void main(String[] args) {
         Scanner entrada = new Scanner(System.in);
-        GestorFunciones gestor = new GestorFunciones(entrada);
+        GestorFunciones gestor = new GestorFunciones(new FacturaRepository(), entrada);
         gestor.inicializarDatosDePrueba();
         int opcion = 0;
         while(opcion != 10) {
