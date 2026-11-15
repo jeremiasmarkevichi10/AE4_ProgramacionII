@@ -53,7 +53,7 @@ package "Personas" {
   class Proveedor
   class Departamento {
     - nombre: String
-    - presupuesto: double
+    - presupuesto: int
     - listaEmpleados: List<Empleado>
   }
 }
@@ -67,7 +67,7 @@ package "Catalogo" {
   }
   class Producto {
     - stock: int
-    - fechaVencimiento: LocalDate
+    - fechaVencimiento: String
   }
   class Servicio
   interface Identificable
