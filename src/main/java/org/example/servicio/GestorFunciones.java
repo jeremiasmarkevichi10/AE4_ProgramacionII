@@ -9,7 +9,6 @@ import org.example.dominio.Exceptions.PagoExcedeDeudaException;
 import org.example.dominio.ComparadorPorTotal;
 import org.example.dominio.Fabricas.FabricaProducto;
 import org.example.dominio.Fabricas.FabricaServicio;
-import org.example.dominio.Interfaces.Identificable;
 import org.example.dominio.ObjetosClave.*;
 import org.example.dominio.RepositorioClientes;
 import org.example.dominio.RepositorioFacturas;
@@ -41,30 +40,24 @@ public class GestorFunciones {
     private final FabricaServicio fabricaServicio;
 
     public GestorFunciones(RepositorioFacturas facturaRepository,
-                           RepositorioClientes clienteRepository) {
-        this(facturaRepository, clienteRepository, new Scanner(System.in));
+                           RepositorioClientes clienteRepository) throws IOException {
+        this(facturaRepository, clienteRepository, PoliticasCredito.estandar());
     }
 
     public GestorFunciones(RepositorioFacturas facturaRepository,
-                           RepositorioClientes clienteRepository, Scanner entrada) {
-        this(facturaRepository, clienteRepository, entrada, PoliticasCredito.estandar(),
+                           RepositorioClientes clienteRepository,
+                           Collection<PoliticaCredito> politicasCredito) throws IOException {
+        this(facturaRepository, clienteRepository, politicasCredito,
                 new FabricaProducto(), new FabricaServicio());
     }
 
     public GestorFunciones(RepositorioFacturas facturaRepository,
-                           RepositorioClientes clienteRepository, Scanner entrada,
-                           Collection<PoliticaCredito> politicasCredito) {
-        this(facturaRepository, clienteRepository, entrada, politicasCredito,
-                new FabricaProducto(), new FabricaServicio());
-    }
-
-    public GestorFunciones(RepositorioFacturas facturaRepository,
-                           RepositorioClientes clienteRepository, Scanner entrada,
+                           RepositorioClientes clienteRepository,
                            Collection<PoliticaCredito> politicasCredito,
-                           FabricaProducto fabricaProducto, FabricaServicio fabricaServicio) {
+                           FabricaProducto fabricaProducto, FabricaServicio fabricaServicio)
+            throws IOException {
         this.facturaRepository = facturaRepository;
         this.clienteRepository = clienteRepository;
-        this.entrada = entrada;
         this.fabricaProducto = fabricaProducto;
         this.fabricaServicio = fabricaServicio;
         this.politicasCredito = new EnumMap<>(Categoria.class);
@@ -80,91 +73,43 @@ public class GestorFunciones {
         this.listaEmpleados = new ArrayList<>();
         this.listaProductos = new ArrayList<>();
         this.listaServicios = new ArrayList<>();
-        this.listaFacturas = new ArrayList<>();
-        try {
-            this.listaFacturas = facturaRepository.obtenerTodas();
-        } catch (IOException e) {
-            System.out.println("No se pudo leer facturas, se arranca vacio: " + e.getMessage());
-            this.listaFacturas = new ArrayList<>();
-        }
-        try {
-            this.listaClientes = clienteRepository.obtenerTodos();
-        } catch (IOException e) {
-            System.out.println("No se pudieron leer clientes, se arranca vacio: " + e.getMessage());
-            this.listaClientes = new ArrayList<>();
-        }
+        this.listaFacturas = facturaRepository.obtenerTodas();
+        this.listaClientes = clienteRepository.obtenerTodos();
         reconstruirHistorialesDeCompra();
     }
 
-    public void mostrarCatalogo() {
-        List<Identificable> catalogo = new ArrayList<>();
+    public List<ItemComercial> obtenerCatalogo() {
+        List<ItemComercial> catalogo = new ArrayList<>();
         catalogo.addAll(listaProductos);
         catalogo.addAll(listaServicios);
-
-        System.out.println("=== Catalogo ===");
-        for (Identificable item : catalogo) {
-            ItemComercial comercial = (ItemComercial) item;
-            System.out.println(item.getTipo() + " | " + comercial.getCodigo() + " | "
-                    + comercial.mostrarResumen());
-        }
+        return Collections.unmodifiableList(catalogo);
     }
 
-    public void mostrarProductosVencidos() {
-        System.out.println("=== Productos vencidos ===");
-        boolean hayVencidos = false;
+    public List<Producto> obtenerProductosVencidos() {
+        List<Producto> productosVencidos = new ArrayList<>();
         for (Producto producto : listaProductos) {
             if (producto.estaVencido()) {
-                System.out.println(producto.getCodigo() + " | " + producto.mostrarResumen()
-                        + " | Vencimiento: " + producto.getFechaVencimiento());
-                hayVencidos = true;
+                productosVencidos.add(producto);
             }
         }
-        if (!hayVencidos) {
-            System.out.println("No hay productos vencidos");
-        }
+        return Collections.unmodifiableList(productosVencidos);
     }
 
-    private final Scanner entrada;
-    int contador = 0;
     Random random = new Random();
     int limiteCredito = 30000 + (random.nextInt(20001));
 
-    public void registrarEmpleado() {
-        System.out.println("=== Registro de Empleados ===");
-        System.out.println("== Informacion personal ==");
-        System.out.println("Ingrese el nombre: ");
-        String nombre = entrada.nextLine();
-        System.out.println("Ingrese el domicilio: ");
-        String domicilio = entrada.nextLine();
-        System.out.println("Ingrese el dni: ");
-        int dni = entrada.nextInt();
-        entrada.nextLine();
-        System.out.println("Ingrese el numero de telefono: ");
-        String telefono = entrada.nextLine();
-        System.out.println("== Informacion de empleo ==");
-        System.out.println("Puesto (ADMINISTRATIVO / TECNICO / GERENTE): ");
-        String puestoTexto = entrada.nextLine().trim().toUpperCase();
-        Puesto puesto = Puesto.valueOf(puestoTexto);
-        System.out.println("Ingrese el salario: ");
-        double salario = entrada.nextDouble();
-        entrada.nextLine();
-        System.out.println("Ingrese la fecha de ingreso: ");
-        String fechaIngreso = entrada.nextLine();
-        System.out.println("Departamentos disponibles: ");
-        for (Departamento t : listaDepartamentos) {
-            System.out.println("-" + t.getNombre());
-        }
-        System.out.println("Ingrese el departamento a ingresar: ");
-        String departamentoElegido = entrada.nextLine();
+    public Empleado registrarEmpleado(String nombre, String domicilio, int dni, String telefono,
+                                      Puesto puesto, double salario, String fechaIngreso,
+                                      String departamentoElegido) {
         Departamento departamento = buscarDepartamentoPorNombre(departamentoElegido);
         if (departamento == null) {
-            System.out.println("Ese departamento no existe. No se puede registrar el empleado");
-            return;
+            throw new IllegalArgumentException(
+                    "Ese departamento no existe. No se puede registrar el empleado");
         }
         Empleado nuevoEmpleado = new Empleado(nombre, domicilio, dni, telefono, salario, puesto, fechaIngreso, departamento);
         departamento.agregarEmpleado(nuevoEmpleado);
         listaEmpleados.add(nuevoEmpleado);
-        System.out.println("--- Empleado " + nuevoEmpleado.getNombre() + " registrado ---");
+        return nuevoEmpleado;
     }
 
     public void agregarDepartamento(Departamento d) {
@@ -200,102 +145,47 @@ public class GestorFunciones {
         return null;
     }
 
-    public void mostrarEmpleados() {
-        if (listaEmpleados.isEmpty()) {
-            System.out.println("No hay empleados registrados");
-        }
-        System.out.println("");
-        System.out.println("=== Empleados ===");
-        for (Empleado e : listaEmpleados) {
-            contador++;
-            System.out.println("Empleado " + "(" + contador + ")");
-            System.out.println(e.mostrarDatos());
-            System.out.println("Domicilio " + e.getDomicilio());
-            System.out.println("Telefono: " + e.getTelefono());
-            System.out.println("Puesto: " + e.getPuesto());
-            System.out.println("Salario: " + e.getSalario());
-            System.out.println("Fecha de ingreso: " + e.getFechaIngreso());
-            System.out.println("Departamento: " + e.getDepartamento().getNombre());
-            System.out.println("===================================");
-        }
+    public List<Empleado> obtenerEmpleados() {
+        return Collections.unmodifiableList(listaEmpleados);
     }
 
-    public void asignarResponsable() {
+    public List<Departamento> obtenerDepartamentos() {
+        return Collections.unmodifiableList(listaDepartamentos);
+    }
+
+    public List<Departamento> obtenerDepartamentosSinResponsable() {
+        List<Departamento> departamentosSinResponsable = new ArrayList<>();
+        for (Departamento departamento : listaDepartamentos) {
+            if (departamento.getResponsable() == null) {
+                departamentosSinResponsable.add(departamento);
+            }
+        }
+        return Collections.unmodifiableList(departamentosSinResponsable);
+    }
+
+    public Empleado asignarResponsable(String departamentoElegido, String empleadoElegido) {
         if (listaEmpleados.isEmpty()) {
-            System.out.println("No hay empleados para asignar responsable");
-            return;
+            throw new IllegalStateException("No hay empleados para asignar responsable");
         }
-        List<Departamento> departamentosFaltantes = new ArrayList<>();
-        for (Departamento t : listaDepartamentos) {
-            if (t.getResponsable() == null) {
-                departamentosFaltantes.add(t);
-            }
-        }
+        List<Departamento> departamentosFaltantes = obtenerDepartamentosSinResponsable();
         if (departamentosFaltantes.isEmpty()) {
-            System.out.println("No hay departamentos sin responsable por el momento");
-            return;
+            throw new IllegalStateException(
+                    "No hay departamentos sin responsable por el momento");
         }
-        System.out.println("Departamentos sin responsable asignado: ");
-        for (Departamento r : departamentosFaltantes) {
-            System.out.println("Nombre: " + r.getNombre());
-            System.out.println("Presupuesto: " + r.getPresupuesto());
-            System.out.println("Empleados: ");
-            for (Empleado y : r.getListaEmpleados()) {
-                System.out.println(y.getNombre() + " | " + y.getPuesto());
-                System.out.println("--------------------------------------------");
-            }
-        }
-        System.out.println("Ingrese el nombre del departamento a asignar responsable: ");
-        boolean departamentoEncontrado = false;
-        String departamentoElegido = entrada.nextLine().trim();
         for (Departamento r : departamentosFaltantes) {
             if (departamentoElegido.equalsIgnoreCase(r.getNombre())) {
-                departamentoEncontrado = true;
-                System.out.println("A continuacion ingrese el nombre del empleado responsable: ");
-                String empleadoElegido = entrada.nextLine().trim();
-                boolean empleadoEncontrado = false;
                 for (Empleado t : r.getListaEmpleados()) {
                     if (empleadoElegido.equalsIgnoreCase(t.getNombre())) {
-                        empleadoEncontrado = true;
                         r.setResponsable(t);
-                        System.out.println("Responsable " + t.getNombre() + " asignado al departamento " + r.getNombre());
-                        break;
+                        return t;
                     }
                 }
-                if (!empleadoEncontrado) {
-                    System.out.println("Ese empleado no pertenece a ese departamento");
-                }
-                break;
+                throw new IllegalArgumentException(
+                        "Ese empleado no pertenece a ese departamento");
             }
         }
-        if (!departamentoEncontrado) {
-            System.out.println("Ese departamento no existe o ya tiene responsable");
-        }
-
-    }
-
-    public void mostrarDepartamentos() {
-        System.out.println("");
-        System.out.println("==== Departamentos ===");
-        for (Departamento t : listaDepartamentos) {
-            System.out.println("Nombre: " + t.getNombre());
-            System.out.println("Presupuesto: " + t.getPresupuesto());
-            if (t.getResponsable() == null) {
-                System.out.println("Responsable: nadie");
-            } else {
-                System.out.println("Responsable: " + t.getResponsable().mostrarDatos());
-            }
-            if (t.getListaEmpleados().isEmpty()) {
-                System.out.println("No hay empleados en este departamento");
-                System.out.println("==================================");
-            } else {
-                System.out.println("Empleados: ");
-                for (Empleado y : t.getListaEmpleados()) {
-                    System.out.println(y.getNombre() + " | " + y.getPuesto());
-                    System.out.println("==================================");
-                }
-            }
-        }
+        throw new IllegalArgumentException(
+                "Ese departamento no existe o ya tiene responsable");
     }
 
         public Cliente buscarCliente (String nombre,int dni){
@@ -433,19 +323,15 @@ public class GestorFunciones {
     }
 
 
-    public void mostrarFacturasOrdenadasPorNumero() {
+    public List<Factura> obtenerFacturasOrdenadasPorNumero() {
         List<Factura> facturasOrdenadas = new ArrayList<>(listaFacturas);
         Collections.sort(facturasOrdenadas);
-        for (Factura f : facturasOrdenadas) {
-            System.out.println(f.getNumero() + " - $" + f.getTotal());
-        }
+        return Collections.unmodifiableList(facturasOrdenadas);
     }
 
-    public void mostrarFacturasOrdenadasPorTotal() {
+    public List<Factura> obtenerFacturasOrdenadasPorTotal() {
         List<Factura> facturasOrdenadas = new ArrayList<>(listaFacturas);
         Collections.sort(facturasOrdenadas, new ComparadorPorTotal());
-        for (Factura f : facturasOrdenadas) {
-            System.out.println(f.getNumero() + " - $" + f.getTotal());
-        }
+        return Collections.unmodifiableList(facturasOrdenadas);
     }
     }

@@ -1,14 +1,17 @@
 package org.example.presentacion;
 
 import org.example.dominio.Enums.FormaPago;
+import org.example.dominio.Enums.Puesto;
 import org.example.dominio.Exceptions.CreditoInsuficienteException;
 import org.example.dominio.Exceptions.FacturaSinItemsException;
 import org.example.dominio.Exceptions.PagoExcedeDeudaException;
 import org.example.dominio.ObjetosClave.Factura;
+import org.example.dominio.ObjetosClave.Departamento;
 import org.example.dominio.ObjetosClave.ItemComercial;
 import org.example.dominio.ObjetosClave.Producto;
 import org.example.dominio.ObjetosClave.Servicio;
 import org.example.dominio.Personas.Cliente;
+import org.example.dominio.Personas.Empleado;
 import org.example.servicio.GestorFunciones;
 
 import java.io.IOException;
@@ -45,16 +48,16 @@ public class MenuConsola {
             entrada.nextLine();
             switch (opcion) {
                 case 1:
-                    gestor.registrarEmpleado();
+                    registrarEmpleadoInteractivo();
                     break;
                 case 2:
-                    gestor.mostrarEmpleados();
+                    mostrarEmpleados();
                     break;
                 case 3:
-                    gestor.asignarResponsable();
+                    asignarResponsableInteractivo();
                     break;
                 case 4:
-                    gestor.mostrarDepartamentos();
+                    mostrarDepartamentos();
                     break;
                 case 5:
                     try {
@@ -67,16 +70,16 @@ public class MenuConsola {
                     }
                     break;
                 case 6:
-                    gestor.mostrarCatalogo();
+                    mostrarCatalogo();
                     break;
                 case 7:
-                    gestor.mostrarProductosVencidos();
+                    mostrarProductosVencidos();
                     break;
                 case 8:
-                    gestor.mostrarFacturasOrdenadasPorNumero();
+                    mostrarFacturas(gestor.obtenerFacturasOrdenadasPorNumero());
                     break;
                 case 9:
-                    gestor.mostrarFacturasOrdenadasPorTotal();
+                    mostrarFacturas(gestor.obtenerFacturasOrdenadasPorTotal());
                     break;
                 case 10:
                     registrarClienteInteractivo();
@@ -90,6 +93,161 @@ public class MenuConsola {
                 default:
                     System.out.println("Opcion invalida");
             }
+        }
+    }
+
+    private void registrarEmpleadoInteractivo() {
+        System.out.println("=== Registro de Empleados ===");
+        System.out.println("== Informacion personal ==");
+        System.out.println("Ingrese el nombre: ");
+        String nombre = entrada.nextLine();
+        System.out.println("Ingrese el domicilio: ");
+        String domicilio = entrada.nextLine();
+        System.out.println("Ingrese el dni: ");
+        int dni = entrada.nextInt();
+        entrada.nextLine();
+        System.out.println("Ingrese el numero de telefono: ");
+        String telefono = entrada.nextLine();
+        System.out.println("== Informacion de empleo ==");
+        System.out.println("Puesto (ADMINISTRATIVO / TECNICO / GERENTE): ");
+        Puesto puesto = Puesto.valueOf(entrada.nextLine().trim().toUpperCase());
+        System.out.println("Ingrese el salario: ");
+        double salario = entrada.nextDouble();
+        entrada.nextLine();
+        System.out.println("Ingrese la fecha de ingreso: ");
+        String fechaIngreso = entrada.nextLine();
+        System.out.println("Departamentos disponibles: ");
+        for (Departamento departamento : gestor.obtenerDepartamentos()) {
+            System.out.println("-" + departamento.getNombre());
+        }
+        System.out.println("Ingrese el departamento a ingresar: ");
+        String nombreDepartamento = entrada.nextLine();
+        try {
+            Empleado empleado = gestor.registrarEmpleado(nombre, domicilio, dni, telefono,
+                    puesto, salario, fechaIngreso, nombreDepartamento);
+            System.out.println("--- Empleado " + empleado.getNombre() + " registrado ---");
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void mostrarEmpleados() {
+        List<Empleado> empleados = gestor.obtenerEmpleados();
+        if (empleados.isEmpty()) {
+            System.out.println("No hay empleados registrados");
+            return;
+        }
+        System.out.println("");
+        System.out.println("=== Empleados ===");
+        int contador = 0;
+        for (Empleado empleado : empleados) {
+            contador++;
+            System.out.println("Empleado " + "(" + contador + ")");
+            System.out.println(empleado.mostrarDatos());
+            System.out.println("Domicilio " + empleado.getDomicilio());
+            System.out.println("Telefono: " + empleado.getTelefono());
+            System.out.println("Puesto: " + empleado.getPuesto());
+            System.out.println("Salario: " + empleado.getSalario());
+            System.out.println("Fecha de ingreso: " + empleado.getFechaIngreso());
+            System.out.println("Departamento: " + empleado.getDepartamento().getNombre());
+            System.out.println("===================================");
+        }
+    }
+
+    private void asignarResponsableInteractivo() {
+        if (gestor.obtenerEmpleados().isEmpty()) {
+            System.out.println("No hay empleados para asignar responsable");
+            return;
+        }
+        List<Departamento> departamentos = gestor.obtenerDepartamentosSinResponsable();
+        if (departamentos.isEmpty()) {
+            System.out.println("No hay departamentos sin responsable por el momento");
+            return;
+        }
+        System.out.println("Departamentos sin responsable asignado: ");
+        for (Departamento departamento : departamentos) {
+            System.out.println("Nombre: " + departamento.getNombre());
+            System.out.println("Presupuesto: " + departamento.getPresupuesto());
+            System.out.println("Empleados: ");
+            for (Empleado empleado : departamento.getListaEmpleados()) {
+                System.out.println(empleado.getNombre() + " | " + empleado.getPuesto());
+                System.out.println("--------------------------------------------");
+            }
+        }
+        System.out.println("Ingrese el nombre del departamento a asignar responsable: ");
+        String nombreDepartamento = entrada.nextLine().trim();
+        boolean departamentoDisponible = false;
+        for (Departamento departamento : departamentos) {
+            if (departamento.getNombre().equalsIgnoreCase(nombreDepartamento)) {
+                departamentoDisponible = true;
+                break;
+            }
+        }
+        if (!departamentoDisponible) {
+            System.out.println("Ese departamento no existe o ya tiene responsable");
+            return;
+        }
+        System.out.println("A continuacion ingrese el nombre del empleado responsable: ");
+        String nombreEmpleado = entrada.nextLine().trim();
+        try {
+            Empleado responsable = gestor.asignarResponsable(nombreDepartamento, nombreEmpleado);
+            System.out.println("Responsable " + responsable.getNombre()
+                    + " asignado al departamento "
+                    + responsable.getDepartamento().getNombre());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void mostrarDepartamentos() {
+        System.out.println("");
+        System.out.println("==== Departamentos ===");
+        for (Departamento departamento : gestor.obtenerDepartamentos()) {
+            System.out.println("Nombre: " + departamento.getNombre());
+            System.out.println("Presupuesto: " + departamento.getPresupuesto());
+            if (departamento.getResponsable() == null) {
+                System.out.println("Responsable: nadie");
+            } else {
+                System.out.println("Responsable: "
+                        + departamento.getResponsable().mostrarDatos());
+            }
+            if (departamento.getListaEmpleados().isEmpty()) {
+                System.out.println("No hay empleados en este departamento");
+                System.out.println("==================================");
+            } else {
+                System.out.println("Empleados: ");
+                for (Empleado empleado : departamento.getListaEmpleados()) {
+                    System.out.println(empleado.getNombre() + " | " + empleado.getPuesto());
+                    System.out.println("==================================");
+                }
+            }
+        }
+    }
+
+    private void mostrarCatalogo() {
+        System.out.println("=== Catalogo ===");
+        for (ItemComercial item : gestor.obtenerCatalogo()) {
+            System.out.println(item.getTipo() + " | " + item.getCodigo() + " | "
+                    + item.mostrarResumen());
+        }
+    }
+
+    private void mostrarProductosVencidos() {
+        System.out.println("=== Productos vencidos ===");
+        List<Producto> productosVencidos = gestor.obtenerProductosVencidos();
+        if (productosVencidos.isEmpty()) {
+            System.out.println("No hay productos vencidos");
+            return;
+        }
+        for (Producto producto : productosVencidos) {
+            System.out.println(producto.getCodigo() + " | " + producto.mostrarResumen()
+                    + " | Vencimiento: " + producto.getFechaVencimiento());
+        }
+    }
+
+    private void mostrarFacturas(List<Factura> facturas) {
+        for (Factura factura : facturas) {
+            System.out.println(factura.getNumero() + " - $" + factura.getTotal());
         }
     }
 
