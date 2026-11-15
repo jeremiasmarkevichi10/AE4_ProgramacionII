@@ -258,6 +258,40 @@ public class GestorFunciones {
             }
             return null;
         }
+
+        public Cliente registrarCliente(String nombre, int dni) {
+            Categoria categoria = Categoria.REGULAR;
+            Cliente cliente = new Cliente(nombre, "Sin especificar", dni, "0000-0000",
+                    asignarCreditoPorCategoria(categoria), categoria);
+            listaClientes.add(cliente);
+            return cliente;
+        }
+
+        public List<Producto> obtenerProductos() {
+            return Collections.unmodifiableList(listaProductos);
+        }
+
+        public List<Servicio> obtenerServicios() {
+            return Collections.unmodifiableList(listaServicios);
+        }
+
+        public Producto buscarProductoPorCodigo(String codigo) {
+            for (Producto producto : listaProductos) {
+                if (codigo.equalsIgnoreCase(producto.getCodigo())) {
+                    return producto;
+                }
+            }
+            return null;
+        }
+
+        public Servicio buscarServicioPorCodigo(String codigo) {
+            for (Servicio servicio : listaServicios) {
+                if (codigo.equalsIgnoreCase(servicio.getCodigo())) {
+                    return servicio;
+                }
+            }
+            return null;
+        }
         private int asignarCreditoPorCategoria (Categoria categoria){
             switch (categoria) {
                 case PREMIUM:
@@ -296,125 +330,10 @@ public class GestorFunciones {
             listaServicios.add(nuevoServicio);
             return nuevoServicio;
         }
-    public void registrarPago() throws FacturaSinItemsException, CreditoInsuficienteException,
-            PagoExcedeDeudaException {
-        System.out.println("==== Registro de compra ====");
-        System.out.println("Esta el cliente registrado en el sistema? (s/n): ");
-        String respuesta = entrada.nextLine().trim().toLowerCase();
-
-        Cliente cliente = null;
-
-        if (respuesta.equals("s") || respuesta.equals("si")) {
-            boolean seguirBuscando = true;
-            while (seguirBuscando && cliente == null) {
-                System.out.println("Ingrese el nombre del cliente: ");
-                String nombreIngresado = entrada.nextLine();
-                System.out.println("Ingrese el dni del cliente: ");
-                int dniIngresado = entrada.nextInt();
-                entrada.nextLine();
-
-                cliente = buscarCliente(nombreIngresado, dniIngresado);
-
-                if (cliente == null) {
-                    System.out.println("No se encontro ningun cliente con esos datos. Desea intentar de nuevo? (s/n): ");
-                    String reintentar = entrada.nextLine().trim().toLowerCase();
-                    seguirBuscando = reintentar.equals("s") || reintentar.equals("si");
-                }
-            }
-        }
-
-        if (cliente == null) {
-            System.out.println("--- Registro de nuevo cliente ---");
-            System.out.println("Ingrese el nombre del cliente: ");
-            String nombreNuevo = entrada.nextLine();
-            System.out.println("Ingrese el dni del cliente: ");
-            int dniNuevo = entrada.nextInt();
-            entrada.nextLine();
-
-            Categoria categoria = Categoria.REGULAR;
-            int limiteCredito = asignarCreditoPorCategoria(categoria);
-            cliente = new Cliente(nombreNuevo, "Sin especificar", dniNuevo, "0000-0000", limiteCredito, categoria);
-            listaClientes.add(cliente);
-            System.out.println("Cliente registrado con categoria REGULAR y credito de $" + limiteCredito);
-        }
-
-        System.out.println(cliente.saludar());
-        List<ItemComercial> carrito = new ArrayList<>();
-        boolean seguirComprando = true;
-
-        while (seguirComprando) {
-            System.out.println("===== Productos =====");
-            for (Producto p : listaProductos) {
-                System.out.println(p.getCodigo() + " | " + p.mostrarResumen() + " | Stock: " + p.getStock());
-            }
-            System.out.println("===== Servicios =====");
-            for (Servicio s : listaServicios) {
-                System.out.println(s.getCodigo() + " | " + s.mostrarResumen());
-            }
-
-            System.out.println("Desea comprar producto o servicio? (p/s): ");
-            String rts = entrada.nextLine().trim().toLowerCase();
-
-            if (rts.equals("p")) {
-                System.out.println("Ingrese el codigo del producto: ");
-                String codigoProducto = entrada.nextLine().trim();
-
-                Producto encontrado = null;
-                for (Producto p : listaProductos) {
-                    if (codigoProducto.equalsIgnoreCase(p.getCodigo())) {
-                        encontrado = p;
-                        break;
-                    }
-                }
-
-                if (encontrado == null) {
-                    System.out.println("Producto no encontrado");
-                } else if (encontrado.estaVencido()) {
-                    System.out.println("No se puede agregar un producto vencido");
-                } else if (encontrado.getStock() <= 0) {
-                    System.out.println("Sin stock disponible");
-                } else {
-                    int cantidadEnCarrito = 0;
-                    for (ItemComercial item : carrito) {
-                        if (item == encontrado) {
-                            cantidadEnCarrito++;
-                        }
-                    }
-                    if (cantidadEnCarrito >= encontrado.getStock()) {
-                        System.out.println("No hay mas stock disponible");
-                    } else {
-                        carrito.add(encontrado);
-                        System.out.println("Producto agregado al carrito");
-                    }
-                }
-
-            } else if (rts.equals("s")) {
-                System.out.println("Ingrese el codigo del servicio: ");
-                String codigo = entrada.nextLine().trim();
-
-                Servicio encontrado = null;
-                for (Servicio s : listaServicios) {
-                    if (codigo.equalsIgnoreCase(s.getCodigo())) {
-                        encontrado = s;
-                        break;
-                    }
-                }
-
-                if (encontrado == null) {
-                    System.out.println("Servicio no encontrado");
-                } else {
-                    carrito.add(encontrado);
-                    System.out.println("Servicio agregado al carrito");
-                }
-
-            } else {
-                System.out.println("Opcion invalida");
-            }
-
-            System.out.println("Desea agregar algo mas? (s/n): ");
-            seguirComprando = entrada.nextLine().trim().toLowerCase().startsWith("s");
-        }
-
+    public Factura registrarPago(Cliente cliente, List<ItemComercial> carrito,
+                                 FormaPago formaPago, double montoPagado)
+            throws FacturaSinItemsException, CreditoInsuficienteException,
+            PagoExcedeDeudaException, IOException {
         if (carrito.isEmpty()) {
             throw new FacturaSinItemsException("No se puede generar una factura sin items");
         }
@@ -423,14 +342,6 @@ public class GestorFunciones {
         for (ItemComercial item : carrito) {
             total += item.getPrecio();
         }
-        System.out.println("Total a pagar: $" + total);
-
-        System.out.println("Forma de pago (EFECTIVO/TARJETA/TRANSFERENCIA): ");
-        FormaPago formaPago = FormaPago.valueOf(entrada.nextLine().trim().toUpperCase());
-
-        System.out.println("Ingrese el monto que abona el cliente: ");
-        double montoPagado = entrada.nextDouble();
-        entrada.nextLine();
 
         if (montoPagado > total) {
             throw new PagoExcedeDeudaException("El monto abonado no puede superar el total de la factura");
@@ -459,14 +370,8 @@ public class GestorFunciones {
                 ((Producto) item).setStockResta(1);
             }
         }
-        try {
-            facturaRepository.guardarTodas(listaFacturas);
-        } catch (IOException e) {
-            System.out.println("No se pudo guardar la factura: " + e.getMessage());
-        }
-        System.out.println("===== Factura generada =====");
-        System.out.println(factura);
-        System.out.println("Estado del pago: " + estado);
+        facturaRepository.guardarTodas(listaFacturas);
+        return factura;
     }
 
 

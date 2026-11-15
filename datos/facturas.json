@@ -70,4 +70,40 @@
     "formapago" : "EFECTIVO",
     "estado" : "PARCIAL"
   }
+}, {
+  "numero" : "G5A",
+  "fecha" : "2026-11-15",
+  "cliente" : {
+    "tipoPersona" : "cliente",
+    "nombre" : "Martin",
+    "domicilio" : "Sin especificar",
+    "dni" : 34664562,
+    "telefono" : "0000-0000",
+    "limiteCredito" : 30000,
+    "categoria" : "REGULAR"
+  },
+  "itemsComprados" : [ {
+    "tipoItem" : "producto",
+    "codigo" : "6HR",
+    "nombre" : "Mouse",
+    "precio" : 53139,
+    "proveedor" : {
+      "tipoPersona" : "proveedor",
+      "nombre" : "Distribuidora Sur",
+      "domicilio" : "Ruta 12 km 5",
+      "dni" : 20111222,
+      "telefono" : "1235343235",
+      "cuit" : "30-12345678-9",
+      "razonsocial" : "Distribuidora Sur SRL"
+    },
+    "fechaVencimiento" : null,
+    "stock" : 6
+  } ],
+  "formapago" : "EFECTIVO",
+  "pago" : {
+    "monto" : 30000.0,
+    "fecha" : "2026-11-15",
+    "formapago" : "EFECTIVO",
+    "estado" : "PARCIAL"
+  }
 } ]

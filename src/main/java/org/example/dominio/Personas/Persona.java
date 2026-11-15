@@ -27,7 +27,7 @@ public abstract class Persona {
 
 
     public String saludar(){
-        return "Hola, soy " + nombre;
+        return "Hola " + nombre;
     }
 
 
