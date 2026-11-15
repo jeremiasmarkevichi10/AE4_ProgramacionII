@@ -1,4 +1,4 @@
-package org.example.persistencia;
+package org.example.Persistencia;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

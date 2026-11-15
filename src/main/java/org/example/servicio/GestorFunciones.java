@@ -11,6 +11,7 @@ import org.example.dominio.Fabricas.FabricaProducto;
 import org.example.dominio.Fabricas.FabricaServicio;
 import org.example.dominio.Interfaces.Identificable;
 import org.example.dominio.ObjetosClave.*;
+import org.example.dominio.RepositorioClientes;
 import org.example.dominio.RepositorioFacturas;
 import org.example.dominio.Personas.Cliente;
 import org.example.dominio.Personas.Empleado;
@@ -34,29 +35,35 @@ public class GestorFunciones {
     private List<Servicio> listaServicios;
     private List<Factura> listaFacturas;
     private final RepositorioFacturas facturaRepository;
+    private final RepositorioClientes clienteRepository;
     private final Map<Categoria, PoliticaCredito> politicasCredito;
     private final FabricaProducto fabricaProducto;
     private final FabricaServicio fabricaServicio;
 
-    public GestorFunciones(RepositorioFacturas facturaRepository) {
-        this(facturaRepository, new Scanner(System.in));
+    public GestorFunciones(RepositorioFacturas facturaRepository,
+                           RepositorioClientes clienteRepository) {
+        this(facturaRepository, clienteRepository, new Scanner(System.in));
     }
 
-    public GestorFunciones(RepositorioFacturas facturaRepository, Scanner entrada) {
-        this(facturaRepository, entrada, PoliticasCredito.estandar(),
+    public GestorFunciones(RepositorioFacturas facturaRepository,
+                           RepositorioClientes clienteRepository, Scanner entrada) {
+        this(facturaRepository, clienteRepository, entrada, PoliticasCredito.estandar(),
                 new FabricaProducto(), new FabricaServicio());
     }
 
-    public GestorFunciones(RepositorioFacturas facturaRepository, Scanner entrada,
+    public GestorFunciones(RepositorioFacturas facturaRepository,
+                           RepositorioClientes clienteRepository, Scanner entrada,
                            Collection<PoliticaCredito> politicasCredito) {
-        this(facturaRepository, entrada, politicasCredito,
+        this(facturaRepository, clienteRepository, entrada, politicasCredito,
                 new FabricaProducto(), new FabricaServicio());
     }
 
-    public GestorFunciones(RepositorioFacturas facturaRepository, Scanner entrada,
+    public GestorFunciones(RepositorioFacturas facturaRepository,
+                           RepositorioClientes clienteRepository, Scanner entrada,
                            Collection<PoliticaCredito> politicasCredito,
                            FabricaProducto fabricaProducto, FabricaServicio fabricaServicio) {
         this.facturaRepository = facturaRepository;
+        this.clienteRepository = clienteRepository;
         this.entrada = entrada;
         this.fabricaProducto = fabricaProducto;
         this.fabricaServicio = fabricaServicio;
@@ -71,7 +78,6 @@ public class GestorFunciones {
         }
         this.listaDepartamentos = new ArrayList<>();
         this.listaEmpleados = new ArrayList<>();
-        this.listaClientes = new ArrayList<>();
         this.listaProductos = new ArrayList<>();
         this.listaServicios = new ArrayList<>();
         this.listaFacturas = new ArrayList<>();
@@ -81,6 +87,13 @@ public class GestorFunciones {
             System.out.println("No se pudo leer facturas, se arranca vacio: " + e.getMessage());
             this.listaFacturas = new ArrayList<>();
         }
+        try {
+            this.listaClientes = clienteRepository.obtenerTodos();
+        } catch (IOException e) {
+            System.out.println("No se pudieron leer clientes, se arranca vacio: " + e.getMessage());
+            this.listaClientes = new ArrayList<>();
+        }
+        reconstruirHistorialesDeCompra();
     }
 
     public void mostrarCatalogo() {
@@ -303,6 +316,33 @@ public class GestorFunciones {
                     calcularLimiteCredito(categoria), categoria);
             listaClientes.add(cliente);
             return cliente;
+        }
+
+        public void guardarDatos() throws IOException {
+            clienteRepository.guardarTodos(listaClientes);
+            facturaRepository.guardarTodas(listaFacturas);
+        }
+
+        private void reconstruirHistorialesDeCompra() {
+            Map<Integer, Cliente> clientesPorDni = new HashMap<>();
+            for (Cliente cliente : listaClientes) {
+                clientesPorDni.putIfAbsent(cliente.getDni(), cliente);
+            }
+            for (Factura factura : listaFacturas) {
+                Cliente clienteDeFactura = factura.getCliente();
+                if (clienteDeFactura == null) {
+                    continue;
+                }
+                Cliente cliente = clientesPorDni.get(clienteDeFactura.getDni());
+                if (cliente == null) {
+                    cliente = clienteDeFactura;
+                    listaClientes.add(cliente);
+                    clientesPorDni.put(cliente.getDni(), cliente);
+                } else {
+                    factura.setCliente(cliente);
+                }
+                cliente.setHistorialCompras(factura);
+            }
         }
 
         public List<Producto> obtenerProductos() {

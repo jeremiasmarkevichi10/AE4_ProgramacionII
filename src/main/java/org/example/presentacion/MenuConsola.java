@@ -28,17 +28,19 @@ public class MenuConsola {
     public void iniciar() {
         gestor.inicializarDatosDePrueba();
         int opcion = 0;
-        while (opcion != 10) {
+        while (opcion != 12) {
             System.out.println("1.Registrar empleado");
             System.out.println("2.Mostrar empleados");
             System.out.println("3.Asignar Responsable");
             System.out.println("4.Mostrar Departamentos");
-            System.out.println("5.Registrar pago");
+            System.out.println("5.Emitir factura y registrar pago");
             System.out.println("6.Mostrar catalogo");
             System.out.println("7.Mostrar productos vencidos");
             System.out.println("8.Mostrar facturas ordenadas por numero");
             System.out.println("9.Mostrar facturas ordenadas por total");
-            System.out.println("10.Salir");
+            System.out.println("10.Registrar cliente");
+            System.out.println("11.Guardar datos");
+            System.out.println("12.Salir");
             opcion = entrada.nextInt();
             entrada.nextLine();
             switch (opcion) {
@@ -77,6 +79,13 @@ public class MenuConsola {
                     gestor.mostrarFacturasOrdenadasPorTotal();
                     break;
                 case 10:
+                    registrarClienteInteractivo();
+                    break;
+                case 11:
+                    guardarDatosInteractivo();
+                    break;
+                case 12:
+                    guardarDatosInteractivo();
                     break;
                 default:
                     System.out.println("Opcion invalida");
@@ -86,114 +95,129 @@ public class MenuConsola {
 
     private void registrarPagoInteractivo() throws FacturaSinItemsException,
             CreditoInsuficienteException, PagoExcedeDeudaException, IOException {
-            System.out.println("==== Registro de compra ====");
-            System.out.println("Esta el cliente registrado en el sistema? (s/n): ");
-            String respuesta = entrada.nextLine().trim().toLowerCase();
+        System.out.println("==== Registro de compra ====");
+        System.out.println("Esta el cliente registrado en el sistema? (s/n): ");
+        String respuesta = entrada.nextLine().trim().toLowerCase();
 
-            Cliente cliente = null;
-            if (respuesta.equals("s") || respuesta.equals("si")) {
-                boolean seguirBuscando = true;
-                while (seguirBuscando && cliente == null) {
-                    System.out.println("Ingrese el nombre del cliente: ");
-                    String nombreIngresado = entrada.nextLine();
-                    System.out.println("Ingrese el dni del cliente: ");
-                    int dniIngresado = entrada.nextInt();
-                    entrada.nextLine();
-
-                    cliente = gestor.buscarCliente(nombreIngresado, dniIngresado);
-                    if (cliente == null) {
-                        System.out.println("No se encontro ningun cliente con esos datos. Desea intentar de nuevo? (s/n): ");
-                        String reintentar = entrada.nextLine().trim().toLowerCase();
-                        seguirBuscando = reintentar.equals("s") || reintentar.equals("si");
-                    }
-                }
-            }
-
-            if (cliente == null) {
-                System.out.println("--- Registro de nuevo cliente ---");
+        Cliente cliente = null;
+        if (respuesta.equals("s") || respuesta.equals("si")) {
+            boolean seguirBuscando = true;
+            while (seguirBuscando && cliente == null) {
                 System.out.println("Ingrese el nombre del cliente: ");
-                String nombreNuevo = entrada.nextLine();
+                String nombreIngresado = entrada.nextLine();
                 System.out.println("Ingrese el dni del cliente: ");
-                int dniNuevo = entrada.nextInt();
+                int dniIngresado = entrada.nextInt();
                 entrada.nextLine();
-                cliente = gestor.registrarCliente(nombreNuevo, dniNuevo);
-                System.out.println("Cliente registrado con categoria REGULAR y credito de $"
-                        + cliente.getLimiteCredito());
+
+                cliente = gestor.buscarCliente(nombreIngresado, dniIngresado);
+                if (cliente == null) {
+                    System.out.println("No se encontro ningun cliente con esos datos. Desea intentar de nuevo? (s/n): ");
+                    String reintentar = entrada.nextLine().trim().toLowerCase();
+                    seguirBuscando = reintentar.equals("s") || reintentar.equals("si");
+                }
+            }
+        }
+
+        if (cliente == null) {
+            cliente = registrarClienteInteractivo();
+        }
+
+        System.out.println(cliente.saludar());
+        List<ItemComercial> carrito = new ArrayList<>();
+        boolean seguirComprando = true;
+        while (seguirComprando) {
+            System.out.println("===== Productos =====");
+            for (Producto producto : gestor.obtenerProductos()) {
+                System.out.println(producto.getCodigo() + " | " + producto.mostrarResumen()
+                        + " | Stock: " + producto.getStock());
+            }
+            System.out.println("===== Servicios =====");
+            for (Servicio servicio : gestor.obtenerServicios()) {
+                System.out.println(servicio.getCodigo() + " | " + servicio.mostrarResumen());
             }
 
-            System.out.println(cliente.saludar());
-            List<ItemComercial> carrito = new ArrayList<>();
-            boolean seguirComprando = true;
-            while (seguirComprando) {
-                System.out.println("===== Productos =====");
-                for (Producto producto : gestor.obtenerProductos()) {
-                    System.out.println(producto.getCodigo() + " | " + producto.mostrarResumen()
-                            + " | Stock: " + producto.getStock());
-                }
-                System.out.println("===== Servicios =====");
-                for (Servicio servicio : gestor.obtenerServicios()) {
-                    System.out.println(servicio.getCodigo() + " | " + servicio.mostrarResumen());
-                }
-
-                System.out.println("Desea comprar producto o servicio? (p/s): ");
-                String tipoItem = entrada.nextLine().trim().toLowerCase();
-                if (tipoItem.equals("p")) {
-                    System.out.println("Ingrese el codigo del producto: ");
-                    Producto producto = gestor.buscarProductoPorCodigo(entrada.nextLine().trim());
-                    if (producto == null) {
-                        System.out.println("Producto no encontrado");
-                    } else if (producto.estaVencido()) {
-                        System.out.println("No se puede agregar un producto vencido");
-                    } else if (producto.getStock() <= 0) {
-                        System.out.println("Sin stock disponible");
-                    } else {
-                        int cantidadEnCarrito = 0;
-                        for (ItemComercial item : carrito) {
-                            if (item == producto) {
-                                cantidadEnCarrito++;
-                            }
-                        }
-                        if (cantidadEnCarrito >= producto.getStock()) {
-                            System.out.println("No hay mas stock disponible");
-                        } else {
-                            carrito.add(producto);
-                            System.out.println("Producto agregado al carrito");
-                        }
-                    }
-                } else if (tipoItem.equals("s")) {
-                    System.out.println("Ingrese el codigo del servicio: ");
-                    Servicio servicio = gestor.buscarServicioPorCodigo(entrada.nextLine().trim());
-                    if (servicio == null) {
-                        System.out.println("Servicio no encontrado");
-                    } else {
-                        carrito.add(servicio);
-                        System.out.println("Servicio agregado al carrito");
-                    }
+            System.out.println("Desea comprar producto o servicio? (p/s): ");
+            String tipoItem = entrada.nextLine().trim().toLowerCase();
+            if (tipoItem.equals("p")) {
+                System.out.println("Ingrese el codigo del producto: ");
+                Producto producto = gestor.buscarProductoPorCodigo(entrada.nextLine().trim());
+                if (producto == null) {
+                    System.out.println("Producto no encontrado");
+                } else if (producto.estaVencido()) {
+                    System.out.println("No se puede agregar un producto vencido");
+                } else if (producto.getStock() <= 0) {
+                    System.out.println("Sin stock disponible");
                 } else {
-                    System.out.println("Opcion invalida");
+                    int cantidadEnCarrito = 0;
+                    for (ItemComercial item : carrito) {
+                        if (item == producto) {
+                            cantidadEnCarrito++;
+                        }
+                    }
+                    if (cantidadEnCarrito >= producto.getStock()) {
+                        System.out.println("No hay mas stock disponible");
+                    } else {
+                        carrito.add(producto);
+                        System.out.println("Producto agregado al carrito");
+                    }
                 }
-
-                System.out.println("Desea agregar algo mas? (s/n): ");
-                seguirComprando = entrada.nextLine().trim().toLowerCase().startsWith("s");
+            } else if (tipoItem.equals("s")) {
+                System.out.println("Ingrese el codigo del servicio: ");
+                Servicio servicio = gestor.buscarServicioPorCodigo(entrada.nextLine().trim());
+                if (servicio == null) {
+                    System.out.println("Servicio no encontrado");
+                } else {
+                    carrito.add(servicio);
+                    System.out.println("Servicio agregado al carrito");
+                }
+            } else {
+                System.out.println("Opcion invalida");
             }
 
-            if (carrito.isEmpty()) {
-                throw new FacturaSinItemsException("No se puede generar una factura sin items");
-            }
-            double total = 0;
-            for (ItemComercial item : carrito) {
-                total += item.getPrecio();
-            }
-            System.out.println("Total a pagar: $" + total);
-            System.out.println("Forma de pago (EFECTIVO/TARJETA/TRANSFERENCIA): ");
-            FormaPago formaPago = FormaPago.valueOf(entrada.nextLine().trim().toUpperCase());
-            System.out.println("Ingrese el monto que abona el cliente: ");
-            double montoPagado = entrada.nextDouble();
-            entrada.nextLine();
+            System.out.println("Desea agregar algo mas? (s/n): ");
+            seguirComprando = entrada.nextLine().trim().toLowerCase().startsWith("s");
+        }
 
-            Factura factura = gestor.registrarPago(cliente, carrito, formaPago, montoPagado);
-            System.out.println("===== Factura generada =====");
-            System.out.println(factura);
-            System.out.println("Estado del pago: " + factura.getPago().getEstado());
+        if (carrito.isEmpty()) {
+            throw new FacturaSinItemsException("No se puede generar una factura sin items");
+        }
+        double total = 0;
+        for (ItemComercial item : carrito) {
+            total += item.getPrecio();
+        }
+        System.out.println("Total a pagar: $" + total);
+        System.out.println("Forma de pago (EFECTIVO/TARJETA/TRANSFERENCIA): ");
+        FormaPago formaPago = FormaPago.valueOf(entrada.nextLine().trim().toUpperCase());
+        System.out.println("Ingrese el monto que abona el cliente: ");
+        double montoPagado = entrada.nextDouble();
+        entrada.nextLine();
+
+        Factura factura = gestor.registrarPago(cliente, carrito, formaPago, montoPagado);
+        System.out.println("===== Factura generada =====");
+        System.out.println(factura);
+        System.out.println("Estado del pago: " + factura.getPago().getEstado());
+    }
+
+    private Cliente registrarClienteInteractivo() {
+        System.out.println("--- Registro de cliente ---");
+        System.out.println("Ingrese el nombre del cliente: ");
+        String nombre = entrada.nextLine();
+        System.out.println("Ingrese el dni del cliente: ");
+        int dni = entrada.nextInt();
+        entrada.nextLine();
+
+        Cliente cliente = gestor.registrarCliente(nombre, dni);
+        System.out.println("Cliente registrado con categoria REGULAR y credito de $"
+                + cliente.getLimiteCredito());
+        return cliente;
+    }
+
+    private void guardarDatosInteractivo() {
+        try {
+            gestor.guardarDatos();
+            System.out.println("Datos guardados correctamente");
+        } catch (IOException e) {
+            System.out.println("No se pudieron guardar todos los datos: " + e.getMessage());
         }
     }
+}

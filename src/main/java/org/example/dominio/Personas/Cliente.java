@@ -10,7 +10,7 @@ import java.util.ArrayList;
 public class Cliente extends Persona {
     private int limiteCredito;
     private Categoria categoria;
-    private List<Factura> historialCompras;
+    private List<Factura> historialCompras = new ArrayList<>();
 
     public Cliente(String nombre, String domicilio, int dni, String telefono,
                    int limiteCredito, Categoria categoria) {
@@ -56,5 +56,4 @@ public class Cliente extends Persona {
     }
     public Cliente() {}
 }
-
 

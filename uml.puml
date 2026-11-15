@@ -1,0 +1,191 @@
+@startuml
+title Sistema de gestion comercial
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #627A9A
+  ArrowColor #627A9A
+}
+skinparam package {
+  BorderColor #8AA082
+  BackgroundColor #F7F9F6
+}
+
+package "Aplicacion" {
+  class Main
+  class MenuConsola {
+    - gestor: GestorFunciones
+    + iniciar()
+    - registrarClienteInteractivo(): Cliente
+    - guardarDatosInteractivo()
+  }
+  class GestorFunciones {
+    - listaClientes: List<Cliente>
+    - listaFacturas: List<Factura>
+    - clienteRepository: RepositorioClientes
+    - facturaRepository: RepositorioFacturas
+    - politicasCredito: Map<Categoria, PoliticaCredito>
+    + registrarCliente(nombre, dni, categoria): Cliente
+    + guardarDatos()
+    + registrarPago(cliente, items, formaPago, monto): Factura
+  }
+}
+
+package "Personas" {
+  abstract class Persona {
+    - nombre: String
+    - domicilio: String
+    - dni: int
+    - telefono: String
+    + mostrarDatos(): String
+  }
+  class Cliente {
+    - limiteCredito: int
+    - categoria: Categoria
+    - historialCompras: List<Factura>
+    + validarCompra(deuda)
+  }
+  class Empleado
+  class Proveedor
+  class Departamento {
+    - nombre: String
+    - presupuesto: double
+    - listaEmpleados: List<Empleado>
+  }
+}
+
+package "Catalogo" {
+  abstract class ItemComercial {
+    - codigo: String
+    - nombre: String
+    - precio: int
+    - proveedor: Proveedor
+  }
+  class Producto {
+    - stock: int
+    - fechaVencimiento: LocalDate
+  }
+  class Servicio
+  interface Identificable
+  interface Vencible
+  abstract class FabricaItemComercial
+  class FabricaProducto
+  class FabricaServicio
+}
+
+package "Facturacion" {
+  class Factura {
+    - numero: String
+    - fecha: String
+    - itemsComprados: List<ItemComercial>
+    - formapago: FormaPago
+    - pago: Pago
+    + getTotal(): double
+  }
+  class Pago {
+    - monto: double
+    - fecha: String
+    - formaPago: FormaPago
+    - estado: Estado
+  }
+  interface RepositorioFacturas
+  class FacturaRepository
+  class ComparadorPorTotal
+}
+
+package "Persistencia de clientes" #E9F1E7 {
+  interface RepositorioClientes {
+    + guardarTodos(clientes)
+    + obtenerTodos(): List<Cliente>
+  }
+  class ClienteRepository {
+    - archivo: File
+    + guardarTodos(clientes)
+    + obtenerTodos(): List<Cliente>
+  }
+}
+
+package "Politicas de credito" #E9F1E7 {
+  interface PoliticaCredito {
+    + getCategoria(): Categoria
+    + calcularLimiteCredito(): int
+  }
+  class PoliticaCreditoRegular
+  class PoliticaCreditoPremium
+  class PoliticaCreditoCorporativo
+  class PoliticasCredito {
+    + estandar(): List<PoliticaCredito>
+  }
+}
+
+enum Categoria {
+  REGULAR
+  PREMIUM
+  CORPORATIVO
+}
+enum Estado {
+  PENDIENTE
+  PARCIAL
+  CANCELADO
+}
+enum FormaPago
+enum Puesto
+class CreditoInsuficienteException
+class FacturaSinItemsException
+class PagoExcedeDeudaException
+
+Persona <|-- Cliente
+Persona <|-- Empleado
+Persona <|-- Proveedor
+Departamento "1" o-- "0..*" Empleado
+Empleado --> Puesto
+Cliente --> Categoria
+Cliente "1" o-- "0..*" Factura : historial de compras
+
+ItemComercial <|-- Producto
+ItemComercial <|-- Servicio
+Producto ..|> Identificable
+Servicio ..|> Identificable
+Producto ..|> Vencible
+Producto --> Proveedor
+Servicio --> Proveedor
+FabricaItemComercial <|-- FabricaProducto
+FabricaItemComercial <|-- FabricaServicio
+FabricaProducto ..> Producto : crea
+FabricaServicio ..> Servicio : crea
+
+Factura --> Cliente
+Factura "1" *-- "1..*" ItemComercial
+Factura "1" *-- "1" Pago
+Pago --> Estado
+Pago --> FormaPago
+Factura --> FormaPago
+RepositorioFacturas <|.. FacturaRepository
+ComparadorPorTotal ..> Factura
+
+RepositorioClientes <|.. ClienteRepository
+ClienteRepository ..> Cliente : lee / guarda
+
+Main ..> MenuConsola
+MenuConsola --> GestorFunciones
+GestorFunciones --> RepositorioClientes
+GestorFunciones --> RepositorioFacturas
+GestorFunciones --> FabricaProducto
+GestorFunciones --> FabricaServicio
+GestorFunciones "1" o-- "0..*" PoliticaCredito
+PoliticaCredito <|.. PoliticaCreditoRegular
+PoliticaCredito <|.. PoliticaCreditoPremium
+PoliticaCredito <|.. PoliticaCreditoCorporativo
+PoliticasCredito ..> PoliticaCredito
+PoliticaCreditoRegular ..> Categoria
+PoliticaCreditoPremium ..> Categoria
+PoliticaCreditoCorporativo ..> Categoria
+
+CreditoInsuficienteException ..> Cliente
+FacturaSinItemsException ..> GestorFunciones
+PagoExcedeDeudaException ..> GestorFunciones
+@enduml
