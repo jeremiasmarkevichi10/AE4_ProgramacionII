@@ -13,10 +13,13 @@ import org.example.dominio.RepositorioFacturas;
 import org.example.dominio.Personas.Cliente;
 import org.example.dominio.Personas.Empleado;
 import org.example.dominio.Personas.Proveedor;
+import org.example.dominio.PoliticasCredito.PoliticaCredito;
+import org.example.dominio.PoliticasCredito.PoliticasCredito;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.EnumMap;
 
 
 import java.util.*;
@@ -29,14 +32,29 @@ public class GestorFunciones {
     private List<Servicio> listaServicios;
     private List<Factura> listaFacturas;
     private final RepositorioFacturas facturaRepository;
+    private final Map<Categoria, PoliticaCredito> politicasCredito;
 
     public GestorFunciones(RepositorioFacturas facturaRepository) {
-        this(facturaRepository, new Scanner(System.in));
+        this(facturaRepository, new Scanner(System.in), PoliticasCredito.estandar());
     }
 
     public GestorFunciones(RepositorioFacturas facturaRepository, Scanner entrada) {
+        this(facturaRepository, entrada, PoliticasCredito.estandar());
+    }
+
+    public GestorFunciones(RepositorioFacturas facturaRepository, Scanner entrada,
+                           Collection<PoliticaCredito> politicasCredito) {
         this.facturaRepository = facturaRepository;
         this.entrada = entrada;
+        this.politicasCredito = new EnumMap<>(Categoria.class);
+        for (PoliticaCredito politica : politicasCredito) {
+            PoliticaCredito anterior = this.politicasCredito.putIfAbsent(
+                    politica.getCategoria(), politica);
+            if (anterior != null) {
+                throw new IllegalArgumentException(
+                        "Ya existe una politica de credito para " + politica.getCategoria());
+            }
+        }
         this.listaDepartamentos = new ArrayList<>();
         this.listaEmpleados = new ArrayList<>();
         this.listaClientes = new ArrayList<>();
@@ -260,9 +278,12 @@ public class GestorFunciones {
         }
 
         public Cliente registrarCliente(String nombre, int dni) {
-            Categoria categoria = Categoria.REGULAR;
+            return registrarCliente(nombre, dni, Categoria.REGULAR);
+        }
+
+        public Cliente registrarCliente(String nombre, int dni, Categoria categoria) {
             Cliente cliente = new Cliente(nombre, "Sin especificar", dni, "0000-0000",
-                    asignarCreditoPorCategoria(categoria), categoria);
+                    calcularLimiteCredito(categoria), categoria);
             listaClientes.add(cliente);
             return cliente;
         }
@@ -292,16 +313,13 @@ public class GestorFunciones {
             }
             return null;
         }
-        private int asignarCreditoPorCategoria (Categoria categoria){
-            switch (categoria) {
-                case PREMIUM:
-                    return 50000;
-                case CORPORATIVO:
-                    return 100000;
-                default:
-                    return 30000;
+        private int calcularLimiteCredito(Categoria categoria) {
+            PoliticaCredito politica = politicasCredito.get(categoria);
+            if (politica == null) {
+                throw new IllegalArgumentException(
+                        "No hay una politica de credito configurada para " + categoria);
             }
-
+            return politica.calcularLimiteCredito();
         }
 
         public String generarCodigoAleatorio () {
